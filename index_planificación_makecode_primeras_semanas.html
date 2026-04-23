@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PLANIFICACIÓN // MakeCode Arcade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --panel: #0f0f1a;
+      --border: #1a1a2e;
+      --cyan: #00f5ff;
+      --pink: #ff006e;
+      --yellow: #ffd600;
+      --green: #39ff14;
+      --purple: #9b00ff;
+      --white: #e8e8f0;
+      --dim: #555577;
+      --glow-cyan: 0 0 10px #00f5ff, 0 0 30px #00f5ff44;
+      --glow-pink: 0 0 10px #ff006e, 0 0 30px #ff006e44;
+      --glow-yellow: 0 0 10px #ffd600, 0 0 30px #ffd60044;
+      --glow-green: 0 0 10px #39ff14, 0 0 30px #39ff1444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    /* ── SCANLINES OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.15) 2px,
+        rgba(0,0,0,0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── PIXEL GRID BG ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,245,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,0.02) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 60px 20px 40px;
+      border-bottom: 2px solid var(--cyan);
+      box-shadow: 0 2px 0 0 var(--cyan), var(--glow-cyan);
+    }
+
+    .header-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--pink);
+      letter-spacing: 4px;
+      text-shadow: var(--glow-pink);
+      margin-bottom: 18px;
+      display: block;
+      animation: blink 1.5s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(14px, 3vw, 22px);
+      color: var(--cyan);
+      text-shadow: var(--glow-cyan);
+      letter-spacing: 2px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .header-dates {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--yellow);
+      text-shadow: var(--glow-yellow);
+      letter-spacing: 3px;
+    }
+
+    .header-decoration {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 28px;
+    }
+
+    .pixel-dot {
+      width: 8px; height: 8px;
+      display: inline-block;
+    }
+    .pixel-dot:nth-child(1) { background: var(--cyan); box-shadow: var(--glow-cyan); }
+    .pixel-dot:nth-child(2) { background: var(--pink); box-shadow: var(--glow-pink); }
+    .pixel-dot:nth-child(3) { background: var(--yellow); box-shadow: var(--glow-yellow); }
+    .pixel-dot:nth-child(4) { background: var(--green); box-shadow: var(--glow-green); }
+    .pixel-dot:nth-child(5) { background: var(--purple); }
+    .pixel-dot:nth-child(6) { background: var(--yellow); box-shadow: var(--glow-yellow); }
+    .pixel-dot:nth-child(7) { background: var(--pink); box-shadow: var(--glow-pink); }
+    .pixel-dot:nth-child(8) { background: var(--cyan); box-shadow: var(--glow-cyan); }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,10,15,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--dim);
+      text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid var(--dim);
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+
+    nav a:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: var(--glow-cyan);
+    }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* ── INTRO SECTION ── */
+    .intro-panel {
+      background: var(--panel);
+      border: 2px solid var(--purple);
+      padding: 32px;
+      margin-bottom: 48px;
+      position: relative;
+    }
+
+    .intro-panel::before {
+      content: '> BRIEFING';
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      background: var(--bg);
+      padding: 0 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--purple);
+      letter-spacing: 2px;
+    }
+
+    .intro-panel p {
+      color: #aaaacc;
+      line-height: 2;
+    }
+
+    .intro-panel strong {
+      color: var(--cyan);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+    }
+
+    /* ── SECTION TITLES ── */
+    .section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(10px, 2vw, 14px);
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      letter-spacing: 2px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.3;
+    }
+
+    /* ── CLASE CARDS ── */
+    .clase-block {
+      margin-bottom: 60px;
+    }
+
+    .clase-card {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .clase-card:hover { border-color: var(--cyan); }
+
+    .clase-card-header {
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .clase-number {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 24px;
+      min-width: 60px;
+      text-align: center;
+      opacity: 0.15;
+      transition: opacity 0.3s;
+    }
+
+    .clase-card:hover .clase-number { opacity: 0.6; }
+
+    .clase-card-header h2 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      flex: 1;
+    }
+
+    .toggle-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--dim);
+      padding: 6px 12px;
+      border: 1px solid var(--dim);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .toggle-btn:hover, .toggle-btn.active {
+      color: var(--yellow);
+      border-color: var(--yellow);
+      box-shadow: var(--glow-yellow);
+    }
+
+    .clase-body {
+      padding: 28px;
+    }
+
+    /* ── OBJECTIVES LIST ── */
+    .objectives {
+      list-style: none;
+      margin-bottom: 28px;
+    }
+
+    .objectives li {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      color: #aaaacc;
+      align-items: flex-start;
+    }
+
+    .objectives li::before {
+      content: '▶';
+      color: var(--green);
+      font-size: 10px;
+      margin-top: 4px;
+      flex-shrink: 0;
+      text-shadow: var(--glow-green);
+    }
+
+    .tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      padding: 3px 6px;
+      border: 1px solid;
+      letter-spacing: 1px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .tag-new { color: var(--green); border-color: var(--green); }
+    .tag-key { color: var(--pink); border-color: var(--pink); }
+    .tag-creative { color: var(--yellow); border-color: var(--yellow); }
+
+    /* ── SLIDE PRESENTATION ── */
+    .slide-section {
+      display: none;
+      margin-top: 28px;
+      border-top: 1px solid var(--border);
+      padding-top: 28px;
+    }
+
+    .slide-section.visible { display: block; }
+
+    .slide-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--pink);
+      letter-spacing: 3px;
+      margin-bottom: 16px;
+      text-shadow: var(--glow-pink);
+    }
+
+    .slideshow {
+      position: relative;
+      background: #070710;
+      border: 2px solid var(--cyan);
+      box-shadow: var(--glow-cyan);
+      min-height: 320px;
+      overflow: hidden;
+    }
+
+    .slide {
+      display: none;
+      padding: 40px 36px;
+      min-height: 320px;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      animation: slideIn 0.3s ease;
+    }
+
+    .slide.active { display: flex; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Slide corner decorations */
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: 8px; left: 8px;
+      width: 16px; height: 16px;
+      border-top: 2px solid var(--cyan);
+      border-left: 2px solid var(--cyan);
+    }
+
+    .slide::after {
+      content: '';
+      position: absolute;
+      bottom: 8px; right: 8px;
+      width: 16px; height: 16px;
+      border-bottom: 2px solid var(--cyan);
+      border-right: 2px solid var(--cyan);
+    }
+
+    .slide-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 1.5vw, 13px);
+      color: var(--yellow);
+      text-shadow: var(--glow-yellow);
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    .slide-content {
+      list-style: none;
+    }
+
+    .slide-content li {
+      padding: 8px 0;
+      color: #ccccee;
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .slide-content li::before {
+      content: '■';
+      color: var(--cyan);
+      flex-shrink: 0;
+      margin-top: 3px;
+      font-size: 8px;
+      text-shadow: var(--glow-cyan);
+    }
+
+    .slide-text {
+      color: #aaaacc;
+      line-height: 2;
+      font-size: 13px;
+    }
+
+    .slide-highlight {
+      color: var(--green);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      background: rgba(57,255,20,0.05);
+      border-left: 3px solid var(--green);
+      padding: 12px 16px;
+      margin-top: 16px;
+      display: block;
+      text-shadow: var(--glow-green);
+      line-height: 2;
+    }
+
+    .slide-tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .slide-chip {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 6px 10px;
+      border: 1px solid var(--purple);
+      color: var(--purple);
+      letter-spacing: 1px;
+    }
+
+    /* Slide controls */
+    .slide-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #070710;
+      border-top: 1px solid var(--border);
+    }
+
+    .slide-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--cyan);
+      background: transparent;
+      border: 1px solid var(--cyan);
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+
+    .slide-btn:hover {
+      background: var(--cyan);
+      color: var(--bg);
+      box-shadow: var(--glow-cyan);
+    }
+
+    .slide-btn:disabled {
+      color: var(--dim);
+      border-color: var(--dim);
+      cursor: not-allowed;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .slide-counter {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--dim);
+      letter-spacing: 2px;
+    }
+
+    .slide-dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .slide-dot {
+      width: 8px; height: 8px;
+      background: var(--dim);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .slide-dot.active {
+      background: var(--cyan);
+      box-shadow: var(--glow-cyan);
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-section {
+      margin-bottom: 48px;
+    }
+
+    .progress-bar-wrapper {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      padding: 24px;
+    }
+
+    .progress-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar {
+      height: 16px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      box-shadow: var(--glow-cyan);
+      width: 0;
+      animation: fillBar 1.5s ease-out 0.5s forwards;
+    }
+
+    @keyframes fillBar { to { width: 100%; } }
+
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg, transparent, transparent 18px,
+        rgba(0,0,0,0.3) 18px, rgba(0,0,0,0.3) 20px
+      );
+    }
+
+    .timeline {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .timeline span {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--dim);
+    }
+
+    /* ── CLASE COLORS ── */
+    .clase-1 .clase-card-header h2 { color: var(--cyan); }
+    .clase-1 .clase-number { color: var(--cyan); }
+
+    .clase-2 .clase-card-header h2 { color: var(--pink); }
+    .clase-2 .clase-number { color: var(--pink); }
+    .clase-2 .clase-card:hover { border-color: var(--pink); }
+    .clase-2 .slide-btn { color: var(--pink); border-color: var(--pink); }
+    .clase-2 .slide-btn:hover { background: var(--pink); color: var(--bg); box-shadow: var(--glow-pink); }
+    .clase-2 .slideshow { border-color: var(--pink); box-shadow: var(--glow-pink); }
+    .clase-2 .slide::before, .clase-2 .slide::after { border-color: var(--pink); }
+    .clase-2 .slide-dot.active { background: var(--pink); box-shadow: var(--glow-pink); }
+    .clase-2 .slide-content li::before { color: var(--pink); text-shadow: var(--glow-pink); }
+
+    .clase-3 .clase-card-header h2 { color: var(--green); }
+    .clase-3 .clase-number { color: var(--green); }
+    .clase-3 .clase-card:hover { border-color: var(--green); }
+    .clase-3 .slide-btn { color: var(--green); border-color: var(--green); }
+    .clase-3 .slide-btn:hover { background: var(--green); color: var(--bg); box-shadow: var(--glow-green); }
+    .clase-3 .slideshow { border-color: var(--green); box-shadow: var(--glow-green); }
+    .clase-3 .slide::before, .clase-3 .slide::after { border-color: var(--green); }
+    .clase-3 .slide-dot.active { background: var(--green); box-shadow: var(--glow-green); }
+    .clase-3 .slide-content li::before { color: var(--green); text-shadow: var(--glow-green); }
+
+    .clase-4 .clase-card-header h2 { color: var(--yellow); }
+    .clase-4 .clase-number { color: var(--yellow); }
+    .clase-4 .clase-card:hover { border-color: var(--yellow); }
+    .clase-4 .slide-btn { color: var(--yellow); border-color: var(--yellow); }
+    .clase-4 .slide-btn:hover { background: var(--yellow); color: var(--bg); box-shadow: var(--glow-yellow); }
+    .clase-4 .slideshow { border-color: var(--yellow); box-shadow: var(--glow-yellow); }
+    .clase-4 .slide::before, .clase-4 .slide::after { border-color: var(--yellow); }
+    .clase-4 .slide-dot.active { background: var(--yellow); box-shadow: var(--glow-yellow); }
+    .clase-4 .slide-content li::before { color: var(--yellow); text-shadow: var(--glow-yellow); }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 40px 20px;
+      border-top: 2px solid var(--border);
+    }
+
+    .footer-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      line-height: 3;
+    }
+
+    .footer-text span {
+      color: var(--cyan);
+      text-shadow: var(--glow-cyan);
+    }
+
+    /* ── SCROLL ANIMATION ── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .clase-card-header { flex-wrap: wrap; }
+      .clase-number { font-size: 18px; min-width: 40px; }
+      nav a { font-size: 6px; padding: 5px 7px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <span class="header-badge">★ St. Patrick's College ★</span>
+    <h1>PLANIFICACIÓN<br>MAKECODE ARCADE</h1>
+    <div class="header-dates">25 / 03 / 26 &nbsp;►&nbsp; 20 / 04 / 26</div>
+    <div class="header-decoration">
+      <span class="pixel-dot"></span>
+      <span class="pixel-dot"></span>
+      <span class="pixel-dot"></span>
+      <span class="pixel-dot"></span>
+      <span class="pixel-dot"></span>
+      <span class="pixel-dot"></span>
+      <span class="pixel-dot"></span>
+      <span class="pixel-dot"></span>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#intro">INTRO</a>
+    <a href="#clase1">CLASE 1</a>
+    <a href="#clase2">CLASE 2</a>
+    <a href="#clase3">CLASE 3</a>
+    <a href="#clase4">CLASE 4</a>
+  </nav>
+
+  <main>
+
+    <!-- PROGRESS -->
+    <div class="progress-section fade-in">
+      <div class="section-title" style="color: var(--dim);">TIMELINE</div>
+      <div class="progress-bar-wrapper">
+        <div class="progress-label">PROGRESO DEL MÓDULO — 4 CLASES</div>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+        <div class="timeline">
+          <span>25 MAR</span>
+          <span>CLASE 1</span>
+          <span>CLASE 2</span>
+          <span>CLASE 3</span>
+          <span>CLASE 4</span>
+          <span>20 ABR</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTRO -->
+    <section id="intro" class="fade-in">
+      <div class="section-title" style="color: var(--purple);">MISIÓN PRINCIPAL</div>
+      <div class="intro-panel">
+        <p>
+          Comenzamos con <strong>MakeCode Arcade</strong>. Los estudiantes en primer lugar tratarán de entender la plataforma para familiarizarse con el entorno.<br><br>
+          Las clases toman ritmo enfocándose en que los estudiantes —usando conocimientos anteriores de <strong>Scratch</strong> y programación en bloques— comiencen creando personajes (sprites), enemigos, ítems y mapas de baldosas (titlemaps).<br><br>
+          Al estar anotados en las <strong>olimpiadas de programación de CEIBAL</strong>, necesitarán aprender mejores mecánicas, usar extensiones y entregar el mejor producto. Pero primero, deben pasar por esta instancia de conocimientos previos.
+        </p>
+      </div>
+    </section>
+
+    <!-- CLASE 1 -->
+    <section id="clase1" class="clase-block clase-1 fade-in">
+      <div class="section-title" style="color: var(--cyan);">CLASE 01</div>
+      <div class="clase-card">
+        <div class="clase-card-header" onclick="toggleSlides('slides1', this)">
+          <div class="clase-number">01</div>
+          <h2>PRIMEROS PASOS</h2>
+          <button class="toggle-btn" tabindex="-1">VER SLIDES ▼</button>
+        </div>
+        <div class="clase-body">
+          <ul class="objectives">
+            <li>Familiarización con el entorno de MakeCode Arcade <span class="tag tag-new">NEW</span></li>
+            <li>Asociar cuenta de Google para no perder los proyectos <span class="tag tag-key">KEY</span></li>
+            <li>Crear un personaje (sprite) y un enemigo que lo persiga <span class="tag tag-new">NEW</span></li>
+          </ul>
+
+          <div id="slides1" class="slide-section">
+            <div class="slide-label">// PRESENTACIÓN CLASE 01</div>
+            <div class="slideshow" id="ss1">
+              <!-- SLIDE 1 -->
+              <div class="slide active">
+                <div class="slide-title">¡BIENVENIDOS A<br>MAKECODE ARCADE!</div>
+                <p class="slide-text">Una plataforma para crear videojuegos retro usando programación en bloques. Si ya sabés Scratch, ¡tenés ventaja!</p>
+                <div class="slide-tag-cloud">
+                  <span class="slide-chip">BLOQUES</span>
+                  <span class="slide-chip">RETRO</span>
+                  <span class="slide-chip">VIDEOJUEGOS</span>
+                  <span class="slide-chip">GRATIS</span>
+                </div>
+              </div>
+              <!-- SLIDE 2 -->
+              <div class="slide">
+                <div class="slide-title">PASO 1<br>EXPLORAR EL ENTORNO</div>
+                <ul class="slide-content">
+                  <li>Abrí makecode.com/arcade en tu navegador</li>
+                  <li>Explorá los bloques disponibles en el panel izquierdo</li>
+                  <li>Conocé el simulador para testear tu juego al instante</li>
+                  <li>Mirá proyectos de ejemplo para inspirarte</li>
+                </ul>
+              </div>
+              <!-- SLIDE 3 -->
+              <div class="slide">
+                <div class="slide-title">PASO 2<br>GUARDAR TU TRABAJO</div>
+                <ul class="slide-content">
+                  <li>Iniciá sesión con tu cuenta de Google</li>
+                  <li>Tu proyecto queda en la nube automáticamente</li>
+                  <li>Podés acceder desde cualquier computadora</li>
+                </ul>
+                <span class="slide-highlight">⚠ IMPORTANTE: Sin cuenta Google tus proyectos se pierden al cerrar el navegador</span>
+              </div>
+              <!-- SLIDE 4 -->
+              <div class="slide">
+                <div class="slide-title">PASO 3<br>TU PRIMER SPRITE</div>
+                <ul class="slide-content">
+                  <li>Creá un sprite de tipo "Player" desde el bloque SET</li>
+                  <li>Dibujá tu personaje en el editor pixel art</li>
+                  <li>Creá un sprite de tipo "Enemy"</li>
+                  <li>Usá el bloque "follow sprite" para que te persiga</li>
+                </ul>
+              </div>
+            </div>
+            <div class="slide-controls">
+              <button class="slide-btn" onclick="changeSlide('ss1', -1)" id="ss1-prev" disabled>◄ PREV</button>
+              <div class="slide-dots" id="ss1-dots">
+                <div class="slide-dot active" onclick="goToSlide('ss1', 0)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss1', 1)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss1', 2)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss1', 3)"></div>
+              </div>
+              <button class="slide-btn" onclick="changeSlide('ss1', 1)" id="ss1-next">NEXT ►</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLASE 2 -->
+    <section id="clase2" class="clase-block clase-2 fade-in">
+      <div class="section-title" style="color: var(--pink);">CLASE 02</div>
+      <div class="clase-card">
+        <div class="clase-card-header" onclick="toggleSlides('slides2', this)">
+          <div class="clase-number">02</div>
+          <h2>COLISIONES & MECÁNICAS</h2>
+          <button class="toggle-btn" tabindex="-1">VER SLIDES ▼</button>
+        </div>
+        <div class="clase-body">
+          <ul class="objectives">
+            <li>Crear proyectiles que salgan del personaje <span class="tag tag-new">NEW</span></li>
+            <li>Uso de overlaps con los diferentes tipos de sprites <span class="tag tag-key">KEY</span></li>
+            <li>Personaje se superpone con enemigo — lógica de daño</li>
+            <li>Proyectil se superpone con enemigo — lógica de destrucción</li>
+          </ul>
+
+          <div id="slides2" class="slide-section">
+            <div class="slide-label">// PRESENTACIÓN CLASE 02</div>
+            <div class="slideshow" id="ss2">
+              <!-- SLIDE 1 -->
+              <div class="slide active">
+                <div class="slide-title">MECÁNICAS DE COMBATE</div>
+                <p class="slide-text">En esta clase aprendemos a crear interacciones entre los sprites: disparos, colisiones y consecuencias en el juego.</p>
+                <div class="slide-tag-cloud">
+                  <span class="slide-chip">OVERLAPS</span>
+                  <span class="slide-chip">PROJECTILE</span>
+                  <span class="slide-chip">SPRITES</span>
+                </div>
+              </div>
+              <!-- SLIDE 2 -->
+              <div class="slide">
+                <div class="slide-title">PROYECTILES</div>
+                <ul class="slide-content">
+                  <li>Usá el bloque "projectile from sprite" para disparar</li>
+                  <li>Configurá la velocidad (vx, vy) según la dirección</li>
+                  <li>Los proyectiles son sprites de tipo "Projectile"</li>
+                  <li>Se destruyen solos al salir de la pantalla</li>
+                </ul>
+              </div>
+              <!-- SLIDE 3 -->
+              <div class="slide">
+                <div class="slide-title">OVERLAPS (COLISIONES)</div>
+                <ul class="slide-content">
+                  <li>Bloque: "on sprite of kind A overlaps B"</li>
+                  <li>Proyectil + Enemigo → destruir enemigo</li>
+                  <li>Enemigo + Player → restar vida / game over</li>
+                  <li>Podés encadenar múltiples overlaps diferentes</li>
+                </ul>
+                <span class="slide-highlight">▶ CONCEPTO CLAVE: Los overlaps son el corazón de la lógica del juego</span>
+              </div>
+              <!-- SLIDE 4 -->
+              <div class="slide">
+                <div class="slide-title">GANAR O PERDER</div>
+                <ul class="slide-content">
+                  <li>Bloque "game over WIN/LOSE" para terminar el juego</li>
+                  <li>Decidí: ¿qué condición hace ganar? ¿qué hace perder?</li>
+                  <li>Podés mostrar mensajes personalizados</li>
+                </ul>
+              </div>
+            </div>
+            <div class="slide-controls">
+              <button class="slide-btn" onclick="changeSlide('ss2', -1)" id="ss2-prev" disabled>◄ PREV</button>
+              <div class="slide-dots" id="ss2-dots">
+                <div class="slide-dot active" onclick="goToSlide('ss2', 0)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss2', 1)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss2', 2)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss2', 3)"></div>
+              </div>
+              <button class="slide-btn" onclick="changeSlide('ss2', 1)" id="ss2-next">NEXT ►</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLASE 3 -->
+    <section id="clase3" class="clase-block clase-3 fade-in">
+      <div class="section-title" style="color: var(--green);">CLASE 03</div>
+      <div class="clase-card">
+        <div class="clase-card-header" onclick="toggleSlides('slides3', this)">
+          <div class="clase-number">03</div>
+          <h2>AVENTURA SUBMARINA</h2>
+          <button class="toggle-btn" tabindex="-1">VER SLIDES ▼</button>
+        </div>
+        <div class="clase-body">
+          <ul class="objectives">
+            <li>Agregar, crear o importar un fondo al juego <span class="tag tag-creative">CREATIVE</span></li>
+            <li>Poner vidas al personaje y cuenta regresiva <span class="tag tag-new">NEW</span></li>
+            <li>Movimiento en cuatro direcciones <span class="tag tag-key">KEY</span></li>
+            <li>Enemigo persigue al jugador durante el tiempo límite</li>
+            <li>Perder vida al superponerse — game over al perderlas todas</li>
+            <li>Ganar si sobrevivís los 30 segundos</li>
+            <li>Extensión: 2 ítems que deben recolectarse para ganar <span class="tag tag-new">NEW</span></li>
+          </ul>
+
+          <div id="slides3" class="slide-section">
+            <div class="slide-label">// PRESENTACIÓN CLASE 03</div>
+            <div class="slideshow" id="ss3">
+              <!-- SLIDE 1 -->
+              <div class="slide active">
+                <div class="slide-title">CONSIGNA:<br>AVENTURA SUBMARINA</div>
+                <p class="slide-text">Creá un juego completo con fondo temático, vidas, tiempo y condiciones de victoria. ¡El océano es tu escenario!</p>
+                <div class="slide-tag-cloud">
+                  <span class="slide-chip">VIDAS</span>
+                  <span class="slide-chip">TIMER</span>
+                  <span class="slide-chip">FONDO</span>
+                  <span class="slide-chip">ÍTEMS</span>
+                </div>
+              </div>
+              <!-- SLIDE 2 -->
+              <div class="slide">
+                <div class="slide-title">ESCENARIO & MOVIMIENTO</div>
+                <ul class="slide-content">
+                  <li>Importá un fondo desde la galería o dibujá el tuyo</li>
+                  <li>Bloque "move mySprite with buttons" para 4 direcciones</li>
+                  <li>El enemigo usa "follow sprite" con velocidad ajustada</li>
+                  <li>Asegurate que no salga de la pantalla</li>
+                </ul>
+              </div>
+              <!-- SLIDE 3 -->
+              <div class="slide">
+                <div class="slide-title">VIDAS & TIEMPO</div>
+                <ul class="slide-content">
+                  <li>Bloque "set life to 3" al inicio del juego</li>
+                  <li>Bloque "start countdown 30 (s)" para la cuenta regresiva</li>
+                  <li>Al superponerse con enemigo → "change life by -1"</li>
+                  <li>Si vidas = 0 → game over LOSE</li>
+                  <li>Al terminar el tiempo → game over WIN</li>
+                </ul>
+                <span class="slide-highlight">▶ LÓGICA: Sobrevivir 30 seg = VICTORIA / Perder todas las vidas = DERROTA</span>
+              </div>
+              <!-- SLIDE 4 -->
+              <div class="slide">
+                <div class="slide-title">EXTENSIÓN: ÍTEMS</div>
+                <ul class="slide-content">
+                  <li>Creá 2 sprites de tipo "Food" (o custom kind)</li>
+                  <li>Overlap Player + Item → destruir ítem, sumar punto</li>
+                  <li>Nueva condición: ganar solo si score = 2 Y sobrevivís</li>
+                  <li>Practicamos condiciones lógicas combinadas (AND)</li>
+                </ul>
+              </div>
+            </div>
+            <div class="slide-controls">
+              <button class="slide-btn" onclick="changeSlide('ss3', -1)" id="ss3-prev" disabled>◄ PREV</button>
+              <div class="slide-dots" id="ss3-dots">
+                <div class="slide-dot active" onclick="goToSlide('ss3', 0)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss3', 1)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss3', 2)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss3', 3)"></div>
+              </div>
+              <button class="slide-btn" onclick="changeSlide('ss3', 1)" id="ss3-next">NEXT ►</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLASE 4 -->
+    <section id="clase4" class="clase-block clase-4 fade-in">
+      <div class="section-title" style="color: var(--yellow);">CLASE 04</div>
+      <div class="clase-card">
+        <div class="clase-card-header" onclick="toggleSlides('slides4', this)">
+          <div class="clase-number">04</div>
+          <h2>TILEMAPS & MUNDOS</h2>
+          <button class="toggle-btn" tabindex="-1">VER SLIDES ▼</button>
+        </div>
+        <div class="clase-body">
+          <ul class="objectives">
+            <li>Primer acercamiento al tilemap (mapa de baldosas) <span class="tag tag-new">NEW</span></li>
+            <li>Creatividad con la paleta de tiles <span class="tag tag-creative">CREATIVE</span></li>
+            <li>Agregar ítems al mapa usando operadores de escenario <span class="tag tag-key">KEY</span></li>
+            <li>Insertar comidas en el nivel <span class="tag tag-new">NEW</span></li>
+            <li>Cuenta regresiva integrada al mapa</li>
+            <li>Puerta (meta) para garantizar la victoria del jugador</li>
+          </ul>
+
+          <div id="slides4" class="slide-section">
+            <div class="slide-label">// PRESENTACIÓN CLASE 04</div>
+            <div class="slideshow" id="ss4">
+              <!-- SLIDE 1 -->
+              <div class="slide active">
+                <div class="slide-title">TILEMAPS:<br>CONSTRUÍ TU MUNDO</div>
+                <p class="slide-text">Los tilemaps permiten crear niveles completos dibujando con baldosas. ¡Deja volar tu creatividad!</p>
+                <div class="slide-tag-cloud">
+                  <span class="slide-chip">TILEMAP</span>
+                  <span class="slide-chip">NIVEL</span>
+                  <span class="slide-chip">DISEÑO</span>
+                  <span class="slide-chip">MUNDO</span>
+                </div>
+              </div>
+              <!-- SLIDE 2 -->
+              <div class="slide">
+                <div class="slide-title">QUÉ ES UN TILEMAP</div>
+                <ul class="slide-content">
+                  <li>Una cuadrícula donde cada celda es una baldosa (tile)</li>
+                  <li>Podés definir qué tiles bloquean el movimiento (walls)</li>
+                  <li>El juego puede ser mucho más grande que la pantalla</li>
+                  <li>La cámara sigue al jugador automáticamente</li>
+                </ul>
+              </div>
+              <!-- SLIDE 3 -->
+              <div class="slide">
+                <div class="slide-title">DISEÑAR EL NIVEL</div>
+                <ul class="slide-content">
+                  <li>Usá la paleta de baldosas para pintar el mapa</li>
+                  <li>Colocá ítems (comida) con operadores de escenario</li>
+                  <li>Diseñá una puerta/meta al final del nivel</li>
+                  <li>Ponele una cuenta regresiva al juego</li>
+                </ul>
+                <span class="slide-highlight">▶ TIP: Usá paredes para crear pasillos y laberintos interesantes</span>
+              </div>
+              <!-- SLIDE 4 -->
+              <div class="slide">
+                <div class="slide-title">CONDICIONES DE VICTORIA</div>
+                <ul class="slide-content">
+                  <li>El jugador llega a la puerta → game over WIN</li>
+                  <li>Recolectar todas las comidas antes de llegar</li>
+                  <li>Se acaba el tiempo sin llegar → LOSE</li>
+                  <li>Combinamos todo lo aprendido en las 4 clases</li>
+                </ul>
+              </div>
+            </div>
+            <div class="slide-controls">
+              <button class="slide-btn" onclick="changeSlide('ss4', -1)" id="ss4-prev" disabled>◄ PREV</button>
+              <div class="slide-dots" id="ss4-dots">
+                <div class="slide-dot active" onclick="goToSlide('ss4', 0)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss4', 1)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss4', 2)"></div>
+                <div class="slide-dot" onclick="goToSlide('ss4', 3)"></div>
+              </div>
+              <button class="slide-btn" onclick="changeSlide('ss4', 1)" id="ss4-next">NEXT ►</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-text">
+      PLANIFICACIÓN &nbsp;•&nbsp; <span>MAKECODE ARCADE</span><br>
+      St. Patrick College <br>
+      <span>25/03/26 — 20/04/26</span>
+    </div>
+  </footer>
+
+  <script>
+    // ── TOGGLE SLIDES ──
+    function toggleSlides(id, header) {
+      const section = document.getElementById(id);
+      const btn = header.querySelector('.toggle-btn');
+      section.classList.toggle('visible');
+      btn.classList.toggle('active');
+      btn.textContent = section.classList.contains('visible') ? 'OCULTAR ▲' : 'VER SLIDES ▼';
+    }
+
+    // ── SLIDESHOW LOGIC ──
+    function getSlides(ssId) {
+      return document.getElementById(ssId).querySelectorAll('.slide');
+    }
+
+    function getDots(ssId) {
+      return document.querySelectorAll('#' + ssId + '-dots .slide-dot');
+    }
+
+    function getCurrentIndex(ssId) {
+      const slides = getSlides(ssId);
+      for (let i = 0; i < slides.length; i++) {
+        if (slides[i].classList.contains('active')) return i;
+      }
+      return 0;
+    }
+
+    function goToSlide(ssId, index) {
+      const slides = getSlides(ssId);
+      const dots = getDots(ssId);
+      slides.forEach(s => s.classList.remove('active'));
+      dots.forEach(d => d.classList.remove('active'));
+      slides[index].classList.add('active');
+      dots[index].classList.add('active');
+
+      const prevBtn = document.getElementById(ssId + '-prev');
+      const nextBtn = document.getElementById(ssId + '-next');
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === slides.length - 1;
+    }
+
+    function changeSlide(ssId, dir) {
+      const current = getCurrentIndex(ssId);
+      const slides = getSlides(ssId);
+      const next = Math.max(0, Math.min(slides.length - 1, current + dir));
+      goToSlide(ssId, next);
+    }
+
+    // ── FADE IN ON SCROLL ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
